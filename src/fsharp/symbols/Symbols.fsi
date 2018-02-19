@@ -162,6 +162,11 @@ and [<Class>] public FSharpEntity =
     /// Get the fully qualified name of the type or module
     member QualifiedName: string 
 
+    member QualifiedName: string
+
+    /// Get the fully qualified name of the type or module without strong assembly name
+    member QualifiedBaseName: string
+
     /// Get the full name of the type or module
     member FullName: string 
 
@@ -953,6 +958,10 @@ and [<Class>] public FSharpType =
     /// Get the base type, if any, taking into account the instantiation of this type
     /// if it is an instantiation of a generic type.
     member BaseType : FSharpType option
+
+     member StrippedType: FSharpType // todo: in case of nativeptr cals real compiled type instead
+
+     member QualifiedBaseName: string
 
     /// Adjust the type by removing any occurrences of type inference variables, replacing them
     /// systematically with lower-case type inference variables such as <c>'a</c>.
