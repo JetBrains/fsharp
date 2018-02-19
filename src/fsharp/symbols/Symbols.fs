@@ -1924,6 +1924,12 @@ and FSharpMemberOrFunctionOrValue(cenv, d:FSharpMemberOrValData, item) =
 
     member x.Data = d
 
+    member x.IsRefCell =
+        not x.IsMember && not x.IsConstructorThisValue &&
+        match d with
+        | V valRef -> (Tastops.isRefCellTy cenv.g valRef.Type)
+        | _ -> false
+
     member x.IsValCompiledAsMethod =
         match d with
         | V valRef -> IlxGen.IsValCompiledAsMethod cenv.g valRef.Deref
