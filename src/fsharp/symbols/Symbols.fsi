@@ -312,6 +312,8 @@ and [<Class>] public FSharpEntity =
     /// Get all active pattern cases defined in all active patterns in the module.
     member ActivePatternCases : FSharpActivePatternCase list
 
+    member IsOptionalAttribute: bool
+
 /// Represents a delegate signature in an F# symbol
 and [<Class>] public FSharpDelegateSignature =
     /// Get the argument types of the delegate signature
