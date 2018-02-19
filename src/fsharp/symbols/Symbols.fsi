@@ -943,6 +943,9 @@ and [<Class>] public FSharpType =
     /// if it is an instantiation of a generic type.
     member AllInterfaces : IList<FSharpType>  
 
+    member IsUnit: bool
+    member IsNativePtr: bool
+
     /// Get the base type, if any, taking into account the instantiation of this type
     /// if it is an instantiation of a generic type.
     member BaseType : FSharpType option
