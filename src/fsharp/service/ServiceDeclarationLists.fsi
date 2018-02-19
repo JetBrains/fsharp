@@ -16,7 +16,7 @@ open Microsoft.FSharp.Compiler.Tastops
 /// Returned by GetDeclarations.
 //
 // Note: this type holds a weak reference to compiler resources. 
-type public FSharpDeclarationListItem =
+type public FSharpDeclarationListItem<'T> =
     /// Get the display name for the declaration.
     member Name : string
 
@@ -38,7 +38,7 @@ type public FSharpDeclarationListItem =
 
     member Glyph : FSharpGlyph
 
-    member Accessibility : FSharpAccessibility option
+    member AdditionalInfo : 'T option
 
     member Kind : CompletionItemKind
 
@@ -58,20 +58,20 @@ type public FSharpDeclarationListItem =
 /// Returned by GetDeclarations.
 //
 // Note: this type holds a weak reference to compiler resources. 
-type public FSharpDeclarationListInfo =
+type public FSharpDeclarationListInfo<'T> =
 
-    member Items : FSharpDeclarationListItem[]
+    member Items : FSharpDeclarationListItem<'T>[]
 
     member IsForType : bool
 
     member IsError : bool
 
     // Implementation details used by other code in the compiler    
-    static member internal Create : infoReader:InfoReader * m:range * denv:DisplayEnv * getAccessibility:(Item -> FSharpAccessibility option) * items:CompletionItem list * reactor:IReactorOperations * currentNamespace:string[] option * isAttributeApplicationContex:bool * checkAlive:(unit -> bool) -> FSharpDeclarationListInfo
+    static member internal Create : infoReader:InfoReader * m:range * denv:DisplayEnv * getAdditionalInfo:(Item -> 'T option) * unresolvedOnly: bool * items:CompletionItem list * reactor:IReactorOperations * currentNamespace:string[] option * isAttributeApplicationContex:bool * checkAlive:(unit -> bool) -> FSharpDeclarationListInfo<'T>
 
-    static member internal Error : message:string -> FSharpDeclarationListInfo
+    static member internal Error : message:string -> FSharpDeclarationListInfo<'T>
 
-    static member Empty : FSharpDeclarationListInfo
+    static member Empty : FSharpDeclarationListInfo<'T>
 
 /// Represents one parameter for one method (or other item) in a group. 
 [<Sealed>]
