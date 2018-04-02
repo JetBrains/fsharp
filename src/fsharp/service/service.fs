@@ -2082,8 +2082,10 @@ type FSharpCheckFileResults(filename: string, errors: FSharpErrorInfo[], scopeOp
     member info.GetUsesOfSymbolInFile(symbol:FSharpSymbol) = 
         threadSafeOp 
             (fun () -> [| |]) 
-            (fun scope -> 
-                [| for symbolUse in scope.ScopeSymbolUses.GetUsesOfSymbol(symbol.Item) |> Seq.distinctBy (fun symbolUse -> symbolUse.ItemOccurence, symbolUse.Range) do
+            (fun scope ->
+                let symbolUses = scope.ScopeSymbolUses.GetUsesOfSymbol(symbol.Item)
+                let distinctUses = symbolUses |> Seq.distinctBy (fun symbolUse -> symbolUse.ItemOccurence, symbolUse.Range) |> List.ofSeq
+                [| for symbolUse in distinctUses do
                      if symbolUse.ItemOccurence <> ItemOccurence.RelatedText then
                         yield FSharpSymbolUse(scope.TcGlobals, symbolUse.DisplayEnv, symbol, symbolUse.ItemOccurence, symbolUse.Range) |])
          |> async.Return 

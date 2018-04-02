@@ -758,6 +758,10 @@ and FSharpUnionCase(cenv, v: UnionCaseRef) =
     member __.IsUnresolved = 
         isUnresolved()
 
+    member __.Union =
+        checkIsResolved()
+        FSharpEntity(cenv, v.TyconRef)
+
     member __.Name = 
         checkIsResolved()
         v.UnionCase.DisplayName

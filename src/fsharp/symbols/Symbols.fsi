@@ -371,6 +371,9 @@ and [<Class>] public FSharpUnionCase =
     /// Get the name of the union case 
     member Name: string 
 
+    /// Declaring union entity
+    member Union: FSharpEntity
+
     /// Get the range of the name of the case 
     member DeclarationLocation : range
 

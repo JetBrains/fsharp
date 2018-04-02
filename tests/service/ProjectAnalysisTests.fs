@@ -5288,8 +5288,11 @@ let ``Unused opens smoke test 1``() =
     let dllName = Path.ChangeExtension(base2, ".dll")
     let projFileName = Path.ChangeExtension(base2, ".fsproj")
     let fileSource1 = """
+module Module
+
 open System.Collections // unused
 open System.Collections.Generic // used, should not appear
+open System.Linq // used
 open FSharp.Control // unused
 open FSharp.Data // unused
 open System.Globalization // unused
@@ -5321,6 +5324,7 @@ type UseTheThings(i:int) =
     member x.UseSomeUsedModuleContainingActivePattern(ActivePattern g) = g
     member x.UseSomeUsedModuleContainingExtensionMember() = (3).Q
     member x.UseSomeUsedModuleContainingUnion() = A
+    member x.UseExtensionMethod() = [].Single()
 """
     File.WriteAllText(fileName1, fileSource1)
 

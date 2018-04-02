@@ -3,62 +3,24 @@
 namespace Microsoft.FSharp.Compiler.SourceCodeServices
 
 open Microsoft.FSharp.Compiler
-open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.Range
 open Microsoft.FSharp.Compiler.PrettyNaming
-open System.Collections.Generic
-open System.Runtime.CompilerServices
 
 module UnusedOpens =
 
     let symbolHash = HashIdentity.FromFunctions (fun (x: FSharpSymbol) -> x.GetEffectivelySameAsHash()) (fun x y -> x.IsEffectivelySameAs(y))
 
     /// Represents one namespace or module opened by an 'open' statement
-    type OpenedModule(entity: FSharpEntity, isNestedAutoOpen: bool) = 
-
-        /// Compute an indexed table of the set of symbols revealed by 'open', on-demand
-        let revealedSymbols : Lazy<HashSet<FSharpSymbol>> =
-           lazy
-            let symbols = 
-               [| for ent in entity.NestedEntities do
-                      yield ent :> FSharpSymbol
-                      
-                      if ent.IsFSharpRecord then
-                          for rf in ent.FSharpFields do
-                              yield rf  :> FSharpSymbol
-                      
-                      if ent.IsFSharpUnion && not (Symbol.hasAttribute<RequireQualifiedAccessAttribute> ent.Attributes) then
-                          for unionCase in ent.UnionCases do
-                              yield unionCase :> FSharpSymbol
-
-                      if Symbol.hasAttribute<ExtensionAttribute> ent.Attributes then
-                          for fv in ent.MembersFunctionsAndValues do
-                              // fv.IsExtensionMember is always false for C# extension methods returning by `MembersFunctionsAndValues`,
-                              // so we have to check Extension attribute instead. 
-                              // (note: fv.IsExtensionMember has proper value for symbols returning by GetAllUsesOfAllSymbolsInFile though)
-                              if Symbol.hasAttribute<ExtensionAttribute> fv.Attributes then
-                                  yield fv :> FSharpSymbol
-                      
-                  for apCase in entity.ActivePatternCases do
-                      yield apCase :> FSharpSymbol
-
-                  // The IsNamespace and IsFSharpModule cases are handled by looking at DeclaringEntity below
-                  if not entity.IsNamespace && not entity.IsFSharpModule then
-                      for fv in entity.MembersFunctionsAndValues do 
-                          yield fv :> FSharpSymbol |]
-
-            HashSet<_>(symbols, symbolHash)
-
-        member __.Entity = entity
-        member __.IsNestedAutoOpen = isNestedAutoOpen
-        member __.RevealedSymbolsContains(symbol) = revealedSymbols.Force().Contains symbol
+    type OpenedModule =
+        { Entity: FSharpEntity
+          IsNestedAutoOpen: bool}
 
     type OpenedModuleGroup = 
         { OpenedModules: OpenedModule list }
         
         static member Create (modul: FSharpEntity) =
             let rec getModuleAndItsAutoOpens (isNestedAutoOpen: bool) (modul: FSharpEntity) =
-                [ yield OpenedModule (modul, isNestedAutoOpen)
+                [ yield { Entity = modul; IsNestedAutoOpen = isNestedAutoOpen }
                   for ent in modul.NestedEntities do
                     if ent.IsFSharpModule && Symbol.hasAttribute<AutoOpenAttribute> ent.Attributes then
                       yield! getModuleAndItsAutoOpens true ent ]
@@ -95,7 +57,7 @@ module UnusedOpens =
         symbolUses
         |> Array.filter (fun su ->
              match su.Symbol with
-             | :? FSharpMemberOrFunctionOrValue as fv when fv.IsExtensionMember -> 
+             | :? FSharpMemberOrFunctionOrValue as fv when fv.IsExtensionMember || fv.IsConstructor -> 
                 // Extension members should be taken into account even though they have a prefix (as they do most of the time)
                 true
              | :? FSharpMemberOrFunctionOrValue as fv when not fv.IsModuleValueOrMember -> 
@@ -111,17 +73,6 @@ module UnusedOpens =
                 let partialName = QuickParse.GetPartialLongNameEx (getSourceLineStr su.RangeAlternate.StartLine, su.RangeAlternate.EndColumn - 1)
                 List.isEmpty partialName.QualifyingIdents)
 
-    /// Split symbol uses into cases that are easy to handle (via DeclaringEntity) and those that don't have a good DeclaringEntity
-    let splitSymbolUses (symbolUses: FSharpSymbolUse[]) : FSharpSymbolUse[] * FSharpSymbolUse[] =
-        symbolUses |> Array.partition (fun symbolUse ->
-            let symbol = symbolUse.Symbol
-            match symbol with
-            | :? FSharpMemberOrFunctionOrValue as f ->
-                match f.DeclaringEntity with
-                | Some ent when ent.IsNamespace || ent.IsFSharpModule -> true
-                | _ -> false
-            | _ -> false)
-
     /// Represents intermediate tracking data used to track the modules which are known to have been used so far
     type UsedModule =
         { Module: FSharpEntity
@@ -131,7 +82,7 @@ module UnusedOpens =
     /// in the scope of the 'open' is from that module.
     ///
     /// Performance will be roughly NumberOfOpenStatements x NumberOfSymbolUses
-    let getUsedModules (symbolUses1: FSharpSymbolUse[], symbolUses2: FSharpSymbolUse[]) (usedModules: UsedModule list) (openStatement: OpenStatement) =
+    let getUsedModules (symbolUses: FSharpSymbolUse[]) (usedModules: UsedModule list) (openStatement: OpenStatement) =
 
         // Don't re-check modules whose symbols are already known to have been used
         let openedGroupsToExamine =
@@ -154,18 +105,26 @@ module UnusedOpens =
             openedGroupsToExamine |> List.filter (fun openedGroup ->
                 openedGroup.OpenedModules |> List.exists (fun openedEntity ->
 
-                    symbolUses1 |> Array.exists (fun symbolUse ->
+                    symbolUses |> Array.exists (fun symbolUse ->
                         rangeContainsRange openStatement.AppliedScope symbolUse.RangeAlternate &&
-                        match symbolUse.Symbol with
-                        | :? FSharpMemberOrFunctionOrValue as f ->
-                            match f.DeclaringEntity with
-                            | Some ent when ent.IsNamespace || ent.IsFSharpModule -> ent.IsEffectivelySameAs openedEntity.Entity
-                            | _ -> false
-                        | _ -> false) || 
-
-                    symbolUses2 |> Array.exists (fun symbolUse ->
-                        rangeContainsRange openStatement.AppliedScope symbolUse.RangeAlternate &&
-                        openedEntity.RevealedSymbolsContains symbolUse.Symbol)))
+                        let declaringEntity =
+                            match symbolUse.Symbol with
+                            | :? FSharpMemberOrFunctionOrValue as mfv ->
+                                let rec getContainingModuleOrNamespace (entityOpt: FSharpEntity option) =
+                                    match entityOpt with
+                                    | Some entity ->
+                                        if entity.IsNamespace || entity.IsFSharpModule then Some entity
+                                        else getContainingModuleOrNamespace entity.DeclaringEntity
+                                    | _ -> None
+                                getContainingModuleOrNamespace mfv.DeclaringEntity
+                            | :? FSharpEntity as e -> e.DeclaringEntity
+                            | :? FSharpActivePatternCase as c -> c.Group.DeclaringEntity
+                            | :? FSharpUnionCase as c -> c.Union.DeclaringEntity
+                            | _ -> None
+                        match declaringEntity with
+                        | Some ent when ent.IsNamespace || ent.IsFSharpModule ->
+                            ent.IsEffectivelySameAs(openedEntity.Entity)
+                        | _ -> false)))
 
         // Return them as interim used entities
         newlyUsedOpenedGroups |> List.collect (fun openedGroup -> 
@@ -201,7 +160,6 @@ module UnusedOpens =
         async {
             let! symbolUses = checkFileResults.GetAllUsesOfAllSymbolsInFile()
             let symbolUses = filterSymbolUses getSourceLineStr symbolUses
-            let symbolUses = splitSymbolUses symbolUses
             let openStatements = getOpenStatements checkFileResults.OpenDeclarations
             return! filterOpenStatements symbolUses openStatements
         }
