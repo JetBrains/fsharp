@@ -18,7 +18,7 @@ type internal TypeProviderLock =
     inherit Lock<TypeProviderToken>
 
 /// Stores and transports aggregated list of errors reported by the type provider
-type internal TypeProviderError =
+type TypeProviderError =
     inherit System.Exception
 
     /// creates new instance of TypeProviderError that represents one error
@@ -44,10 +44,10 @@ type internal TypeProviderError =
 
 /// This struct wraps a value produced by a type provider to properly attribute any failures.
 [<NoEquality; NoComparison; Class>]
-type internal Tainted<'T> =
+type Tainted<'T> =
 
     /// Create an initial tainted value
-    static member CreateAll: (ITypeProvider * ILScopeRef) list -> Tainted<ITypeProvider> list
+    static member CreateAll: (ITypeProvider * ILScopeRef * string) list -> Tainted<ITypeProvider> list
 
     /// A type provider that produced the value
     member TypeProvider: Tainted<ITypeProvider>
@@ -98,7 +98,7 @@ type internal Tainted<'T> =
     member Coerce<'U> : range: range -> Tainted<'U>
 
 [<RequireQualifiedAccess>]
-module internal Tainted =
+module Tainted =
 
     /// Test whether the tainted value is null
 #if NO_CHECKNULLS
@@ -113,7 +113,9 @@ module internal Tainted =
 
     /// Test whether the tainted value equals given value. Type providers are ignored (equal tainted values produced by different type providers are equal)
     /// Failure in call to equality operation will be blamed on type provider of first operand
-    val EqTainted: Tainted<'T> -> Tainted<'T> -> bool when 'T: equality and 'T: not struct
+    val EqTainted: Tainted<'T> -> Tainted<'T> -> bool when 'T : equality and 'T : not struct
+    
+    val PhysicallyEqTainted: Tainted<'T> -> Tainted<'T> -> bool when 'T : equality
 
     /// Compute the hash value for the tainted value
     val GetHashCodeTainted: Tainted<'T> -> int when 'T: equality
