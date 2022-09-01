@@ -2181,6 +2181,16 @@ type internal TypeCheckInfo
                 Trace.TraceInformation(sprintf "FCS: recovering from error in GetDeclarationListSymbols: '%s'" msg)
                 [])
 
+    member _.ResolveNameAtLocation(cursorPos, plid: string list): FSharpSymbolUse option =
+         let (nenv, ad), m = GetBestEnvForPos cursorPos
+         let plid = plid |> List.map (SyntaxTreeOps.mkSynId m)
+         match ResolveExprLongIdent TcResultsSink.NoSink ncenv m ad nenv TypeNameResolutionInfo.Default plid None with
+         | Exception _ -> None 
+         | Result (_, item, _) ->
+             let itemWithInst = ItemWithNoInst item
+             let symbol = FSharpSymbol.Create(cenv, item)
+             Some (FSharpSymbolUse(nenv.DisplayEnv,symbol,itemWithInst.TyparInstantiation,ItemOccurence.Use,m))
+
     /// Get the "reference resolution" tooltip for at a location
     member _.GetReferenceResolutionStructuredToolTipText(line, col, width) =
 
@@ -3411,6 +3421,11 @@ type FSharpCheckFileResults
             scope.GetSymbolUsesAtLocation(line, lineText, colAtEndOfNames, names)
             |> List.map (fun (sym, itemWithInst, denv, m) ->
                 FSharpSymbolUse(denv, sym, itemWithInst.TyparInstantiation, ItemOccurence.Use, m))
+
+    member _.ResolveNamesAtLocation(cursorPos, plid: string list) =
+        match details with
+        | None -> None
+        | Some(scope, _) -> scope.ResolveNameAtLocation(cursorPos, plid)
 
     member _.GetMethodsAsSymbols(line, colAtEndOfNames, lineText, names) =
         match details with

@@ -368,6 +368,8 @@ type public FSharpCheckFileResults =
     /// <param name="names">The identifiers at the location where the information is being requested.</param>
     member GetMethods: line: int * colAtEndOfNames: int * lineText: string * names: string list option -> MethodGroup
 
+    member ResolveNamesAtLocation: pos * string list -> FSharpSymbolUse option
+
     /// <summary>Compute a set of method overloads to show in a dialog relevant to the given code location.  The resulting method overloads are returned as symbols.</summary>
     /// <param name="line">The line number where the information is being requested.</param>
     /// <param name="colAtEndOfNames">The column number at the end of the identifiers where the information is being requested.</param>
