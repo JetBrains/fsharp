@@ -2020,6 +2020,18 @@ type internal TypeCheckInfo
     member scope.IsRelativeNameResolvableFromSymbol(cursorPos: pos, plid: string list, symbol: FSharpSymbol) : bool =
         scope.IsRelativeNameResolvable(cursorPos, plid, symbol.Item)
 
+    member scope.TryGetExpressionType(range) =
+        sResolutions.CapturedExpressionTypings 
+        |> Seq.tryFindBack (fun (_, _, _, m) -> equals m range)
+        |> Option.map (fun (ty, _, _, _) -> FSharpType (cenv, ty))
+
+    member scope.GetExpressionDisplayContext(range) =
+        sResolutions.CapturedExpressionTypings
+        |> Seq.tryFindBack (fun (_, _, _, m) -> equals m range)
+        |> Option.map (fun (_, q, _, _) -> FSharpDisplayContext(fun _ -> q.DisplayEnv))
+
+
+
     /// Get the auto-complete items at a location
     member _.GetDeclarations(parseResultsOpt, line, lineStr, partialName, completionContextAtPos, getAllEntities) =
         let isSigFile = SourceFileImpl.IsSignatureFile mainInputFileName
@@ -3468,6 +3480,16 @@ type FSharpCheckFileResults
             FSharpProjectContext(scope.ThisCcu, scope.GetReferencedAssemblies(), scope.AccessRights, scope.ProjectOptions)
 
     member _.DependencyFiles = dependencyFiles
+
+    member _.GetTypeOfExpression(range: range) =
+         match details with
+         | None -> None
+         | Some(scope, _) -> scope.TryGetExpressionType(range)
+
+     member _.GetExpressionDisplayContext(range: range) =
+         match details with
+         | None -> None
+         | Some(scope, _) -> scope.GetExpressionDisplayContext(range)
 
     member _.GetAllUsesOfAllSymbolsInFile(?cancellationToken: CancellationToken) =
         match details with
