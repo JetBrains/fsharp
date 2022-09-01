@@ -390,9 +390,9 @@ type Test() =
     let file = "/home/user/Test.fsx"
     let parseResult, typeCheckResults =  parseAndCheckScript(file, input)
 
-    let decls = typeCheckResults.GetDeclarationListSymbols(Some parseResult, 4, inputLines[3], PartialLongName.Empty(20), (fun () -> []))
+    let decls = typeCheckResults.GetDeclarationListSymbols(Some parseResult, 4, inputLines[3], PartialLongName.Empty(20), false, (fun () -> []))
     //decls |> List.map (fun d -> d.Head.Symbol.DisplayName) |> printfn "---> decls = %A"
-    decls |> Seq.exists (fun d -> d.Head.Symbol.DisplayName = "abc") |> shouldEqual true
+    decls |> Seq.exists (fun d -> d.SymbolUses.Head.Symbol.DisplayName = "abc") |> shouldEqual true
 
 [<Fact>]
 let ``Symbol based find function from member 2`` () =
@@ -407,9 +407,9 @@ type Test() =
     let file = "/home/user/Test.fsx"
     let parseResult, typeCheckResults =  parseAndCheckScript(file, input)
 
-    let decls = typeCheckResults.GetDeclarationListSymbols(Some parseResult, 4, inputLines[3], PartialLongName.Empty(21), (fun () -> []))
+    let decls = typeCheckResults.GetDeclarationListSymbols(Some parseResult, 4, inputLines[3], PartialLongName.Empty(21), false, (fun () -> []))
     //decls |> List.map (fun d -> d.Head.Symbol.DisplayName) |> printfn "---> decls = %A"
-    decls |> Seq.exists (fun d -> d.Head.Symbol.DisplayName = "abc") |> shouldEqual true
+    decls |> Seq.exists (fun d -> d.SymbolUses.Head.Symbol.DisplayName = "abc") |> shouldEqual true
 
 [<Fact>]
 let ``Symbol based find function from var`` () =
@@ -424,9 +424,9 @@ type Test() =
     let file = "/home/user/Test.fsx"
     let parseResult, typeCheckResults =  parseAndCheckScript(file, input)
 
-    let decls = typeCheckResults.GetDeclarationListSymbols(Some parseResult, 4, inputLines[3], PartialLongName.Empty(14), (fun () -> []))
+    let decls = typeCheckResults.GetDeclarationListSymbols(Some parseResult, 4, inputLines[3], PartialLongName.Empty(14), false, (fun () -> []))
     //decls |> List.map (fun d -> d.Head.Symbol.DisplayName) |> printfn "---> decls = %A"
-    decls |> Seq.exists (fun d -> d.Head.Symbol.DisplayName = "abc") |> shouldEqual true
+    decls |> Seq.exists (fun d -> d.SymbolUses.Head.Symbol.DisplayName = "abc") |> shouldEqual true
 
 [<Fact>]
 let ``Printf specifiers for regular and verbatim strings`` () =
