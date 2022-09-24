@@ -198,6 +198,11 @@ type MetadataAssemblyGeneration =
     /// Only emits the assembly as a reference assembly.
     | ReferenceOnly
 
+[<RequireQualifiedAccess>]
+type ParallelReferenceResolution =
+    | On
+    | Off
+
 [<NoEquality; NoComparison>]
 type TcConfigBuilder =
     {
@@ -478,6 +483,8 @@ type TcConfigBuilder =
         mutable langVersion: LanguageVersion
 
         mutable xmlDocInfoLoader: IXmlDocumentationInfoLoader option
+
+        mutable parallelReferenceResolution: ParallelReferenceResolution
     }
 
     static member CreateNew:
@@ -836,6 +843,8 @@ type TcConfig =
 
     /// Check if the primary assembly is mscorlib
     member assumeDotNetFramework: bool
+
+    member parallelReferenceResolution: ParallelReferenceResolution
 
 /// Represents a computation to return a TcConfig. Normally this is just a constant immutable TcConfig,
 /// but for F# Interactive it may be based on an underlying mutable TcConfigBuilder.
