@@ -333,7 +333,7 @@ module internal FSharpEnvironment =
 
                 Path.GetFullPath(Path.Combine(!!assemblyLocation, "..", "..", "..", dotnet))
 
-            if fileExists candidate then
+            if false && fileExists candidate then
                 Some candidate
             else
                 match probePathForDotnetHost () with
