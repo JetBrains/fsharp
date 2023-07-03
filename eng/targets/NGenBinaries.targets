@@ -11,16 +11,9 @@
     </PropertyGroup>
   </Target>
 
-  <Target Name="MaybeSetSigning"
-          BeforeTargets="CoreCompile"
-          AfterTargets="BeforeCoreCompile"
-          Condition="'$(OS)' != 'Unix'">
-
-      <PropertyGroup Condition="'$(IsAdministrator)' == 'true' ">
-        <DelaySign>true</DelaySign>
-        <PublicSign>false</PublicSign>
-      </PropertyGroup>
-  </Target>
+  <PropertyGroup>
+    <PublicSign>true</PublicSign>
+  </PropertyGroup>
 
   <Target Name="NGenWindowsBinaries"
           AfterTargets="Build"
