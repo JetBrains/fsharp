@@ -480,6 +480,8 @@ type ITypecheckResultsSink =
     /// Record that an expression has a specific type at the given range.
     abstract NotifyExprHasType: TType * NameResolutionEnv * AccessorDomain * range -> unit
 
+    abstract NotifyExprHasTypeSynthetic: TType * NameResolutionEnv * AccessorDomain * range -> unit
+
     /// Record that a name resolution occurred at a specific location in the source
     abstract NotifyNameResolution:
         pos * Item * TyparInstantiation * ItemOccurrence * NameResolutionEnv * AccessorDomain * range * bool -> unit
@@ -628,6 +630,9 @@ val internal CallNameResolutionSinkReplacing:
 
 /// Report a specific name resolution at a source range
 val internal CallExprHasTypeSink: TcResultsSink -> range * NameResolutionEnv * TType * AccessorDomain -> unit
+
+/// Report type at range, but don't use it in features like code completion, only in TryGetExpressionType
+val internal CallExprHasTypeSinkSynthetic: TcResultsSink -> range * NameResolutionEnv * TType * AccessorDomain -> unit
 
 /// Report an open declaration
 val internal CallOpenDeclarationSink: TcResultsSink -> OpenDeclaration -> unit
