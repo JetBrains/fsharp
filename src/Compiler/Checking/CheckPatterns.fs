@@ -99,6 +99,7 @@ and TcSimplePat optionalArgsOK checkConstraints (cenv: cenv) ty env patEnv p =
 
     | SynSimplePat.Typed (p, cty, m) ->
         let ctyR, tpenv = TcTypeAndRecover cenv NewTyparsOK checkConstraints ItemOccurence.UseInType WarnOnIWSAM.Yes env tpenv cty
+        CallExprHasTypeSinkSynthetic cenv.tcSink (p.Range, env.NameEnv, ctyR, env.AccessRights)
 
         match p with
         // Optional arguments on members
@@ -249,6 +250,7 @@ and TcPat warnOnUpper (cenv: cenv) env valReprInfo vFlags (patEnv: TcPatLinearEn
         TcConstPat warnOnUpper cenv env vFlags patEnv ty synConst m
 
     | SynPat.Wild m ->
+        CallExprHasTypeSinkSynthetic cenv.tcSink (m, env.NameEnv, ty, env.AccessRights)
         (fun _ -> TPat_wild m), patEnv
 
     | SynPat.IsInst (synTargetTy, m)
@@ -604,6 +606,7 @@ and TcPatLongIdentUnionCaseOrExnCase warnOnUpper cenv env ad vFlags patEnv ty (m
 
     // Report information about the case occurrence to IDE
     CallNameResolutionSink cenv.tcSink (mLongId, env.NameEnv, item, emptyTyparInst, ItemOccurence.Pattern, env.eAccessRights)
+    CallExprHasTypeSinkSynthetic cenv.tcSink (m, env.NameEnv, ty, env.AccessRights)
 
     let mkf, argTys, argNames = ApplyUnionCaseOrExn m cenv env ty item
     let numArgTys = argTys.Length

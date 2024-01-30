@@ -1782,6 +1782,7 @@ let MakeAndPublishSimpleValsForMergedScope (cenv: cenv) env m (names: NameMap<_>
                             notifyNameResolution (pos, item, itemGroup, itemTyparInst, occurence, nenv, ad, m, replacing)
 
                         member _.NotifyExprHasType(_, _, _, _) = assert false // no expr typings in MakeAndPublishSimpleVals
+                        member _.NotifyExprHasTypeSynthetic(_, _, _, _) =  assert false // no expr typings in MakeAndPublishSimpleVals
 
                         member _.NotifyFormatSpecifierLocation(_, _) = ()
 
@@ -5749,7 +5750,8 @@ and TcExprUndelayed (cenv: cenv) (overallTy: OverallTy) env tpenv (synExpr: SynE
         let pushedExpr = pushUnaryArg synExpr unaryArg
         let lambda = SynExpr.Lambda(false, false, SynSimplePats.SimplePats([ svar ],[], svar.Range), pushedExpr, None, m, SynExprLambdaTrivia.Zero)
         TcIteratedLambdas cenv true env overallTy Set.empty tpenv lambda
-    | SynExpr.Lambda _ ->
+    | SynExpr.Lambda(range = m) ->
+        CallExprHasTypeSinkSynthetic cenv.tcSink (m, env.NameEnv, overallTy.Commit, env.AccessRights)
         TcIteratedLambdas cenv true env overallTy Set.empty tpenv synExpr
 
     | SynExpr.Match (spMatch, synInputExpr, synClauses, _m, _trivia) ->
@@ -7628,6 +7630,7 @@ and TcAssertExpr cenv overallTy env (m: range) tpenv x =
     TcExpr cenv overallTy env tpenv callDiagnosticsExpr
 
 and TcRecdExpr cenv overallTy env tpenv (inherits, withExprOpt, synRecdFields, mWholeExpr) =
+    CallExprHasTypeSink cenv.tcSink (mWholeExpr, env.NameEnv, overallTy, env.eAccessRights)
     let g = cenv.g
 
     let requiresCtor = (GetCtorShapeCounter env = 1) // Get special expression forms for constructors
@@ -8247,6 +8250,8 @@ and TcDelayed cenv (overallTy: OverallTy) env tpenv mExpr expr exprTy (atomicFla
     // We can now record for posterity the type of this expression and the location of the expression.
     if (atomicFlag = ExprAtomicFlag.Atomic) then
         CallExprHasTypeSink cenv.tcSink (mExpr, env.NameEnv, exprTy, env.eAccessRights)
+    else
+        CallExprHasTypeSinkSynthetic cenv.tcSink (mExpr, env.NameEnv, exprTy, env.eAccessRights)
 
     match delayed with
     | []
