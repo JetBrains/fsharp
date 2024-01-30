@@ -307,6 +307,9 @@ type FSharpChecker
         let argv = List.ofArray options.OtherOptions
         ic.GetParsingOptionsFromCommandLineArgs(sourceFiles, argv, options.UseScriptResolutionRules)
 
+    member _.GetCachedScriptOptions(path) =
+        backgroundCompiler.GetCachedScriptOptions(path + ".fsproj")
+
     member _.ParseFile(fileName, sourceText, options, ?cache, ?userOpName: string) =
         let cache = defaultArg cache true
         let userOpName = defaultArg userOpName "Unknown"
