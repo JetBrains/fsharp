@@ -169,6 +169,8 @@ type internal IBackgroundCompiler =
         fileName: string * options: FSharpProjectOptions * sourceText: ISourceText option * userOpName: string ->
             (FSharpParseFileResults * FSharpCheckFileResults * SourceTextHash) option
 
+    abstract GetCachedScriptOptions: path: string -> FSharpProjectOptions option
+
     abstract TryGetRecentCheckResultsForFile:
         fileName: string * projectSnapshot: FSharpProjectSnapshot * userOpName: string ->
             (FSharpParseFileResults * FSharpCheckFileResults) option

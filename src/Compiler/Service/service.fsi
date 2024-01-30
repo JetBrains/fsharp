@@ -251,6 +251,8 @@ type public FSharpChecker =
         ?userOpName: string ->
             Async<FSharpProjectOptions * FSharpDiagnostic list>
 
+    member GetCachedScriptOptions: path: string -> FSharpProjectOptions option
+
     /// <param name="fileName">Used to differentiate between scripts, to consider each script a separate project. Also used in formatted error messages.</param>
     /// <param name="source">The source for the file.</param>
     /// <param name="documentSource">DocumentSource to load any additional files.</param>

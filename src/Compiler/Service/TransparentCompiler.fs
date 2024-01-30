@@ -2595,3 +2595,5 @@ type internal TransparentCompiler
                 userOpName: string
             ) : (FSharpParseFileResults * FSharpCheckFileResults) option =
             TryGetRecentCheckResultsForFile(fileName, projectSnapshot, userOpName)
+
+        member this.GetCachedScriptOptions _ = None
