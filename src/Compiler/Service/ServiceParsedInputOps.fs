@@ -1773,13 +1773,15 @@ module ParsedInput =
                             Some(CompletionContext.RecordField(RecordContext.Declaration true))
                         | _ when rangeContainsPos fieldRange pos -> Some(CompletionContext.RecordField(RecordContext.Declaration false))
                         | _, SynType.FromParseError _ -> Some(CompletionContext.RecordField(RecordContext.Declaration false))
-                        | _ -> None)
+                        | _ -> None
+                    )
                     // No completions in a record outside of all fields, except in attributes, which is established earlier in VisitAttributeApplication
                     |> Option.orElseWith (fun _ ->
                         if rangeContainsPos range pos then
                             Some CompletionContext.Invalid
                         else
-                            None)
+                            None
+                    )
 
                 member _.VisitUnionDefn(_, cases, _) =
                     cases
