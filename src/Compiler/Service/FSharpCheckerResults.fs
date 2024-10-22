@@ -2252,7 +2252,7 @@ type internal TypeCheckInfo
          | Result (_, item, _) ->
              let itemWithInst = ItemWithNoInst item
              let symbol = FSharpSymbol.Create(cenv, item)
-             Some (FSharpSymbolUse(nenv.DisplayEnv,symbol,itemWithInst.TyparInstantiation,ItemOccurence.Use,m))
+             Some (FSharpSymbolUse(nenv.DisplayEnv,symbol,itemWithInst.TyparInstantiation,ItemOccurrence.Use,m))
 
     /// Get the "reference resolution" tooltip for at a location
     member _.GetReferenceResolutionStructuredToolTipText(line, col, width) =
