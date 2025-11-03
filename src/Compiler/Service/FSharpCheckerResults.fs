@@ -12,7 +12,9 @@ open System.IO
 open System.Reflection
 open System.Threading
 open FSharp.Compiler.IO
+open FSharp.Compiler.Import.Nullness
 open FSharp.Compiler.NicePrint
+open FSharp.Compiler.TypeHierarchy
 open Internal.Utilities.Library
 open Internal.Utilities.Library.Extras
 open Internal.Utilities.TypeHashing
@@ -2088,6 +2090,13 @@ type internal TypeCheckInfo
         |> Seq.tryFindBack (fun (_, _, _, m) -> equals m range)
         |> Option.map (fun (_, q, _, _) -> FSharpDisplayContext(fun _ -> q.DisplayEnv))
 
+    member scope.ImportILType(ty: ILType) : FSharpType =
+        let amap = tcImports.GetImportMap()
+        let assemblyRef = ILAssemblyRef.Create("", None, None, false, None, None)
+        let scopeRef = ILScopeRef.Assembly assemblyRef
+        let typ = ImportILTypeFromMetadata amap range0 scopeRef [] [] NullableAttributesSource.Empty ty
+        FSharpType(cenv, typ)
+
     /// Get the auto-complete items at a location
     member _.GetDeclarations
         (parseResultsOpt, line, lineStr, partialName, completionContextAtPos, getAllEntities, genBodyForOverriddenMeth)
@@ -3561,6 +3570,9 @@ type FSharpCheckFileResults
         match details with
         | None -> None
         | Some(scope, _) -> scope.TryGetCapturedDisplayContext(range)
+
+    member _.ImportILType(ty: ILType) =
+        scopeOptX |> Option.map _.ImportILType(ty)
 
     member _.GetAllUsesOfAllSymbolsInFile(?cancellationToken: CancellationToken) =
         match details with

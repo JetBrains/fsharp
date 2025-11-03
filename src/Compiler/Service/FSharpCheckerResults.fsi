@@ -279,6 +279,8 @@ type public FSharpCheckFileResults =
     member TryGetCapturedType: range -> FSharpType option
     member TryGetCapturedDisplayContext: range -> FSharpDisplayContext option
 
+    member ImportILType: ILType -> FSharpType option
+
     /// <summary>Get the items for a declaration list</summary>
     ///
     /// <param name="parsedFileResults">
