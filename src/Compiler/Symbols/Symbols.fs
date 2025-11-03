@@ -2571,24 +2571,55 @@ type FSharpType(cenv, ty:TType) =
 
     member _.IsMeasureType =
        isResolved() &&
-       protect <| fun () ->
-        match stripTyparEqns ty with
-        | TType_measure _ -> true
-        | _ -> false
+       protect <| fun () -> isMeasureTy cenv.g ty
 
     member _.IsTupleType = 
        isResolved() &&
-       protect <| fun () -> 
-        match stripTyparEqns ty with 
-        | TType_tuple _ -> true 
-        | _ -> false
+       protect <| fun () -> isRefTupleTy cenv.g ty
 
     member _.IsStructTupleType = 
        isResolved() &&
-       protect <| fun () -> 
-        match stripTyparEqns ty with 
-        | TType_tuple (tupInfo, _) -> evalTupInfoIsStruct tupInfo
-        | _ -> false
+       protect <| fun () -> isStructTupleTy cenv.g ty
+
+    member _.IsUnitType =
+        isResolved () &&
+        protect <| fun () -> isUnitTy cenv.g ty
+
+    member _.IsArrayType =
+        isResolved () &&
+        protect <| fun () -> isArrayTy cenv.g ty
+
+    member _.IsNativePointerType =
+        isResolved () &&
+        protect <| fun () -> isNativePtrTy cenv.g ty
+
+    member _.IsFSharpList =
+        isResolved () &&
+        protect <| fun () -> isListTy cenv.g ty
+
+    member _.IsFSharpChoice =
+        isResolved () &&
+        protect <| fun () -> isChoiceTy cenv.g ty
+
+    member _.IsFSharpOption =
+        isResolved () &&
+        protect <| fun () -> isOptionTy cenv.g ty
+
+    member _.IsFSharpValueOption =
+        isResolved () &&
+        protect <| fun () -> isValueOptionTy cenv.g ty
+
+    member _.IsStringType =
+        isResolved () &&
+        protect <| fun () -> isStringTy cenv.g ty
+
+    member _.IsObjectType =
+        isResolved () &&
+        protect <| fun () -> isObjTyAnyNullness cenv.g ty
+
+    member _.IsBooleanType =
+        isResolved () &&
+        protect <| fun () -> isBoolTy cenv.g ty
 
     member _.TypeDefinition = 
        protect <| fun () -> 
@@ -2647,17 +2678,11 @@ type FSharpType(cenv, ty:TType) =
 
     member _.IsFunctionType = 
        isResolved() &&
-       protect <| fun () -> 
-        match stripTyparEqns ty with 
-        | TType_fun _ -> true 
-        | _ -> false
+       protect <| fun () -> isFunTy cenv.g ty
 
     member _.IsAnonRecordType = 
        isResolved() &&
-       protect <| fun () -> 
-        match stripTyparEqns ty with 
-        | TType_anon _ -> true 
-        | _ -> false
+       protect <| fun () -> isAnonRecdTy cenv.g ty
 
     member _.AnonRecordTypeDetails = 
        protect <| fun () -> 
@@ -2690,17 +2715,18 @@ type FSharpType(cenv, ty:TType) =
         GetSuperTypeOfType cenv.g cenv.amap range0 ty
         |> Option.map (fun ty -> FSharpType(cenv, ty)) 
 
-    member x.ErasedType=
+    member x.ErasedType =
         FSharpType(cenv, stripTyEqnsWrtErasure EraseAll cenv.g ty)
 
     member x.BasicQualifiedName =
-        protect <| fun () ->
-            match stripTyparEqns ty with 
-            | TType_app(tcref, _, _) ->
-                match tcref.CompiledRepresentation with 
-                | CompiledTypeRepr.ILAsmNamed(tref, _, _) -> Some tref.BasicQualifiedName
-                | CompiledTypeRepr.ILAsmOpen _ -> None 
-            | _ -> None
+        if isUnresolved () then None else
+
+        match stripTyparEqns ty with 
+        | TType_app(tcref, _, _) ->
+            match tcref.CompiledRepresentation with 
+            | CompiledTypeRepr.ILAsmNamed(tref, _, _) -> Some tref.BasicQualifiedName
+            | CompiledTypeRepr.ILAsmOpen _ -> None 
+        | _ -> None
 
     member _.Instantiate(instantiation:(FSharpGenericParameter * FSharpType) list) = 
         let resTy = instType (instantiation |> List.map (fun (tyv, ty) -> tyv.TypeParameter, ty.Type)) ty
