@@ -2216,7 +2216,7 @@ module internal ExprRemapping =
                             let ctxt =
                                 st.Context.RemapTyconRefs(unbox >> remapTyconRef tmenv.tyconRefRemap >> box >> (!!))
 
-                            ProvidedType.ApplyContext(st, ctxt))
+                            st.ApplyContext(ctxt))
                 }
 #endif
         | TNoRepr -> repr
