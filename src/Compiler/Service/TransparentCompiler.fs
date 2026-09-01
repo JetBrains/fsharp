@@ -968,29 +968,7 @@ type internal TransparentCompiler
                 // different for each cached project.  So here we create a new tcGlobals, with the existing
                 // framework values and the updated realsig, langversion and pathMap
                 let tcGlobals =
-                    if
-                        tcGlobals.langVersion <> tcConfig.langVersion
-                        || tcGlobals.realsig <> tcConfig.realsig
-                        || tcGlobals.pathMap <> tcConfig.pathMap
-                    then
-                        TcGlobals(
-                            tcGlobals.compilingFSharpCore,
-                            tcGlobals.ilg,
-                            tcGlobals.fslibCcu,
-                            tcGlobals.directoryToResolveRelativePaths,
-                            tcGlobals.isInteractive,
-                            tcGlobals.checkNullness,
-                            tcGlobals.useReflectionFreeCodeGen,
-                            tcGlobals.tryFindSysTypeCcuHelper,
-                            tcGlobals.emitDebugInfoInQuotations,
-                            tcGlobals.noDebugAttributes,
-                            tcConfig.pathMap,
-                            tcConfig.langVersion,
-                            tcConfig.realsig,
-                            tcConfig.compilationMode
-                        )
-                    else
-                        tcGlobals
+                    tcGlobals.WithLanguageSettings(tcConfig.pathMap, tcConfig.langVersion, tcConfig.realsig, tcConfig.compilationMode)
 
                 // Note we are not calling diagnosticsLogger.GetDiagnostics() anywhere for this task.
                 // This is ok because not much can actually go wrong here.
@@ -1873,7 +1851,9 @@ type internal TransparentCompiler
                                     bootstrapInfo.OutFile,
                                     topAttrs,
                                     bootstrapInfo.AssemblyName,
-                                    ilAssemRef
+                                    ilAssemRef,
+                                    // Only the background compiler offers contents in imported form
+                                    None
                                 )
                                 :> IRawFSharpAssemblyData
                             )

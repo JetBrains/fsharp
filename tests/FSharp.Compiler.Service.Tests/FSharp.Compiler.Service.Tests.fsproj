@@ -48,6 +48,7 @@
     <Compile Include="ProjectAnalysisTests.fs" />
     <Compile Include="MultiProjectAnalysisTests.fs" />
     <Compile Include="IncrementalBuilderRaceTests.fs" />
+    <Compile Include="ProjectReferenceHandoverTests.fs" />
     <Compile Include="PerfTests.fs" />
     <Compile Include="InteractiveCheckerTests.fs" />
     <Compile Include="ExprTests.fs" />
