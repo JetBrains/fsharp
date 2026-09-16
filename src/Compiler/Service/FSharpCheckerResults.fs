@@ -368,6 +368,7 @@ type internal TypeCheckInfo
         _sTcConfig: TcConfig,
         g: TcGlobals,
         ccuSigForFile: ModuleOrNamespaceType,
+        ownSigForFile: ModuleOrNamespaceType,
         thisCcu: CcuThunk,
         tcImports: TcImports,
         tcAccessRights: AccessorDomain,
@@ -2900,6 +2901,9 @@ type internal TypeCheckInfo
     member _.PartialAssemblySignatureForFile =
         FSharpAssemblySignature(g, thisCcu, ccuSigForFile, tcImports, None, ccuSigForFile)
 
+    member _.FileSignature =
+        FSharpAssemblySignature(g, thisCcu, ownSigForFile, tcImports, None, ownSigForFile)
+
     member _.AccessRights = tcAccessRights
 
     member _.ProjectOptions = projectOptions
@@ -3431,7 +3435,7 @@ module internal ParseAndCheckFile =
                             new CompilationGlobalsScope(errHandler.DiagnosticsLogger, BuildPhase.TypeCheck)
 
                         let! result =
-                            CheckOneInputAndFinish(
+                            CheckOneInput(
                                 checkForErrors,
                                 tcConfig,
                                 tcImports,
@@ -3449,7 +3453,7 @@ module internal ParseAndCheckFile =
                         let mty =
                             Construct.NewEmptyModuleOrNamespaceType(ModuleOrNamespaceKind.Namespace true)
 
-                        return ((tcState.TcEnvFromSignatures, EmptyTopAttrs, [], [ mty ]), tcState)
+                        return ((tcState.TcEnvFromSignatures, EmptyTopAttrs, None, mty, mty), tcState)
                 }
 
             // Play background errors and warnings for this file.
@@ -3459,7 +3463,7 @@ module internal ParseAndCheckFile =
                     | FSharpDiagnosticSeverity.Hidden -> ()
                     | s -> diagnosticSink { diagnostic with Severity = s }
 
-            let (tcEnvAtEnd, _, implFiles, ccuSigsForFiles), tcState = resOpt
+            let (tcEnvAtEnd, _, implFileOpt, ccuSigForFile, ownSigForFile), tcState = resOpt
 
             let symbolEnv = SymbolEnv(tcGlobals, tcState.Ccu, Some tcState.CcuSig, tcImports)
             let errors = errHandler.CollectedDiagnostics(Some symbolEnv)
@@ -3468,7 +3472,8 @@ module internal ParseAndCheckFile =
                 TypeCheckInfo(
                     tcConfig,
                     tcGlobals,
-                    List.head ccuSigsForFiles,
+                    ccuSigForFile,
+                    ownSigForFile,
                     tcState.Ccu,
                     tcImports,
                     tcEnvAtEnd.AccessRights,
@@ -3479,7 +3484,7 @@ module internal ParseAndCheckFile =
                     sink.GetSymbolUses(),
                     tcEnvAtEnd.NameEnv,
                     loadClosure,
-                    List.tryHead implFiles,
+                    implFileOpt,
                     sink.GetOpenDeclarations()
                 )
 
@@ -3655,6 +3660,11 @@ type FSharpCheckFileResults
         | None -> failwith "not available"
         | Some(scope, _builderOpt) -> scope.PartialAssemblySignatureForFile
 
+    member _.FileSignature =
+        match details with
+        | None -> failwith "not available"
+        | Some(scope, _builderOpt) -> scope.FileSignature
+
     member _.ProjectContext =
         match details with
         | None -> failwith "not available"
@@ -3822,6 +3832,7 @@ type FSharpCheckFileResults
             tcErrors: FSharpDiagnostic[],
             keepAssemblyContents,
             ccuSigForFile,
+            ownSigForFile,
             thisCcu,
             tcImports,
             tcAccessRights,
@@ -3838,6 +3849,7 @@ type FSharpCheckFileResults
                 tcConfig,
                 tcGlobals,
                 ccuSigForFile,
+                ownSigForFile,
                 thisCcu,
                 tcImports,
                 tcAccessRights,
