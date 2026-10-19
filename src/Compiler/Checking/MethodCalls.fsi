@@ -447,7 +447,6 @@ val AdjustCallerArgs:
         (Expr -> Expr) *
         Expr list *
         'b option list *
-        AssignedCalledArg<Expr> list *
         Expr list *
         (Expr -> Expr) *
         'c option list *
