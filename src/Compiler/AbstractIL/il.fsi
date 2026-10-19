@@ -919,6 +919,8 @@ type WellKnownILAttributes =
     | AttributeUsageAttribute = (1u <<< 24)
     | NotNullIfNotNullAttribute = (1u <<< 25)
     | OverloadResolutionPriorityAttribute = (1u <<< 26)
+    | EditorBrowsableNever = (1u <<< 28)
+    | EditorBrowsableAdvanced = (1u <<< 29)
     | NotComputed = (1u <<< 31)
 
 /// Represents the efficiency-oriented storage of ILAttributes in another item.
@@ -927,6 +929,8 @@ type ILAttributesStored =
     member CustomAttrs: ILAttributes
 
     member HasWellKnownAttribute: flag: WellKnownILAttributes * compute: (ILAttributes -> WellKnownILAttributes) -> bool
+
+    member GetOrComputeWellKnownFlags: compute: (ILAttributes -> WellKnownILAttributes) -> WellKnownILAttributes
 
     static member CreateReader: idx: int32 * f: (int32 -> ILAttribute[]) -> ILAttributesStored
     static member CreateGiven: attrs: ILAttributes -> ILAttributesStored
