@@ -38,6 +38,7 @@
     <Compile Include="ILBinaryReaderMemoryTests.fs" />
     <Compile Include="EditorTests.fs" />
 <!--    <Compile Include="EditorTests.fs" />-->
+    <Compile Include="InterpolatedStringsTests.fs" />
     <Compile Include="Symbols.fs" />
     <Compile Include="RecordConstructorTests.fs" />
     <Compile Include="TestDoubles.fs" />
