@@ -1,4 +1,4 @@
-﻿module FSharp.Compiler.Service.Tests.EditorTests
+module FSharp.Compiler.Service.Tests.EditorTests
 
 open Xunit
 open FSharp.Test.Assert
@@ -2027,9 +2027,10 @@ let x =
                 PartialIdent = ""
                 QualifyingIdents = [ "Entry" ]
             },
+            false,
             fun _ -> List.empty
         )
-        |> List.concat
+        |> List.collect _.SymbolUses
 
     hasRecordField "Idx" declarations
     hasRecordField "FileName" declarations
@@ -2063,9 +2064,10 @@ module Module2 =
                 PartialIdent = ""
                 QualifyingIdents = [ "Module1" ]
             },
+            false,
             fun _ -> List.empty
         )
-        |> List.concat
+        |> List.collect _.SymbolUses
 
     hasRecordField "Field1" declarations
     hasRecordField "Field2" declarations
@@ -2100,9 +2102,10 @@ module Module2 =
                 PartialIdent = ""
                 QualifyingIdents = [ "R1" ]
             },
+            false,
             fun _ -> List.empty
         )
-        |> List.concat
+        |> List.collect _.SymbolUses
 
     hasRecordField "Field1" declarations
 
@@ -2132,9 +2135,10 @@ module Module2 =
                 PartialIdent = ""
                 QualifyingIdents = [ "Module1"; "R1" ]
             },
+            false,
             fun _ -> List.empty
         )
-        |> List.concat
+        |> List.collect _.SymbolUses
 
     hasRecordField "Field1" declarations
 
@@ -2163,9 +2167,10 @@ let rUpdate = { r1 with  }
                 PartialIdent = ""
                 QualifyingIdents = []
             },
+            false,
             fun _ -> List.empty
         )
-        |> List.concat
+        |> List.collect _.SymbolUses
 
     hasRecordField "Field1" declarations
     hasRecordField "Field2" declarations
